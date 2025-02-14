@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "1081346852166",
+    "project_id": "cloud-functions-get-star-4e4ba",
+    "storage_bucket": "cloud-functions-get-star-4e4ba.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1081346852166:android:657e03d51c7b7698b31147",
+        "android_client_info": {
+          "package_name": "com.example.firebase_read_email_client"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1081346852166-g69r676noa0rp83shu6q5plef81d6iue.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBk94YB8FYC_eABwSjhTF5Rq-okmtoXgp0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1081346852166-g69r676noa0rp83shu6q5plef81d6iue.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1081346852166-fpvorllgpd74f99a9d99sa7t39f2vu4h.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.firebaseReadEmailClient"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
