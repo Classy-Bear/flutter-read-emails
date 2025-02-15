@@ -35,10 +35,52 @@ class EmailViewPageState extends State<EmailViewPage> {
           },
         ),
       );
-    final String contentBase64 =
-        base64Encode(const Utf8Encoder().convert(widget.htmlContent));
-    _controller.loadRequest(
-        Uri.parse('data:text/html;charset=utf-8;base64,$contentBase64'));
+    if (widget.htmlContent.isNotEmpty) {
+      final String contentBase64 =
+          base64Encode(const Utf8Encoder().convert(widget.htmlContent));
+      _controller.loadRequest(
+          Uri.parse('data:text/html;charset=utf-8;base64,$contentBase64'));
+    } else {
+      _controller.loadHtmlString('''
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>404 Not Found</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                background-color: #f2f2f2; 
+                margin: 0; 
+                padding: 20px; 
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                height: 100vh; 
+              }
+              .container { 
+                text-align: center; 
+              }
+              h1 { 
+                color: #d9534f; 
+                font-size: 72px; 
+                margin: 0; 
+              }
+              p { 
+                font-size: 24px; 
+                color: #555; 
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>404</h1>
+              <p>Page Not Found</p>
+            </div>
+          </body>
+        </html>
+      ''');
+    }
   }
 
   @override
