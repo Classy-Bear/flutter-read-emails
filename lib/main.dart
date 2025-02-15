@@ -4,6 +4,7 @@ import 'package:firebase_read_email_client/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:logging/logging.dart';
+import 'package:firebase_read_email_client/email_view_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -123,7 +124,19 @@ class _AuthPageState extends State<AuthPage> {
                           final emailData = _emails[index];
                           return ListTile(
                             title: Text(emailData['subject'] ?? 'No Subject'),
-                            subtitle: Text(emailData['body']?.toString() ?? ''),
+                            subtitle: Text(emailData['date']?.toString() ?? ''),
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EmailViewPage(
+                                      htmlContent:
+                                          emailData['body']?.toString() ?? '',
+                                      subject:
+                                          emailData['subject'] ?? 'No Subject',
+                                    ),
+                                  ));
+                            },
                           );
                         },
                       ),
