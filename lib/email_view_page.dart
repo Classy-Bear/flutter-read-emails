@@ -15,31 +15,32 @@ class EmailViewPage extends StatefulWidget {
 
 class EmailViewPageState extends State<EmailViewPage> {
   late final WebViewController _controller;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    final delegate = NavigationDelegate(
+      onPageFinished: (_) {
+        if (isLoading) {
+          _controller.reload();
+          setState(() {
+            isLoading = false;
+          });
+        }
+      },
+      onNavigationRequest: (_) => NavigationDecision.navigate,
+    );
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onProgress: (int progress) {
-            // You can update a progress indicator here if needed
-          },
-          onPageStarted: (String url) {},
-          onPageFinished: (String url) {},
-          onWebResourceError: (WebResourceError error) {},
-          onNavigationRequest: (NavigationRequest request) {
-            return NavigationDecision.navigate;
-          },
-        ),
-      );
+      ..setNavigationDelegate(delegate);
     if (widget.htmlContent.isNotEmpty) {
-      final String contentBase64 =
-          base64Encode(const Utf8Encoder().convert(widget.htmlContent));
-      _controller.loadRequest(
-          Uri.parse('data:text/html;charset=utf-8;base64,$contentBase64'));
+      _controller.loadRequest(Uri.dataFromString(
+        widget.htmlContent,
+        mimeType: 'text/html',
+        encoding: Encoding.getByName('utf-8'),
+      ));
     } else {
       _controller.loadHtmlString('''
         <!DOCTYPE html>
