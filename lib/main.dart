@@ -115,6 +115,10 @@ class _AuthPageState extends State<AuthPage> {
                     : const Text("Reload Emails"),
               ),
               const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _getEmails,
+                child: const Text("Fetchemails"),
+              ),
               Expanded(
                 child: _emails.isEmpty
                     ? const Center(child: Text("No emails found."))
@@ -186,6 +190,11 @@ class _AuthPageState extends State<AuthPage> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _getEmails() async {
+    await _authService.getEmails();
+    _loadEmails();
   }
 
   Future<void> _handleSignOut() async {
