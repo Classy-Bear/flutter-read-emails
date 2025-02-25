@@ -6,8 +6,14 @@ import 'package:webview_flutter/webview_flutter.dart';
 class EmailViewPage extends StatefulWidget {
   final String htmlContent;
   final String? subject;
+  final List<dynamic> attachments;
 
-  const EmailViewPage({super.key, required this.htmlContent, this.subject});
+  const EmailViewPage({
+    super.key,
+    required this.htmlContent,
+    this.subject,
+    required this.attachments,
+  });
 
   @override
   EmailViewPageState createState() => EmailViewPageState();
@@ -16,6 +22,21 @@ class EmailViewPage extends StatefulWidget {
 class EmailViewPageState extends State<EmailViewPage> {
   late final WebViewController _controller;
   bool isLoading = true;
+
+  String _replaceAttachmentCids(String htmlContent, List<dynamic> attachments) {
+    String modifiedContent = htmlContent;
+    for (final attachment in attachments) {
+      final String filename = attachment['filename'] as String;
+      final String downloadUrl = attachment['downloadUrl'] as String;
+      modifiedContent =
+          modifiedContent.replaceAll("cid:$filename", downloadUrl);
+      modifiedContent =
+          modifiedContent.replaceAll("'cid:$filename'", "'$downloadUrl'");
+      modifiedContent =
+          modifiedContent.replaceAll('"cid:$filename"', '"$downloadUrl"');
+    }
+    return modifiedContent;
+  }
 
   @override
   void initState() {
@@ -36,8 +57,9 @@ class EmailViewPageState extends State<EmailViewPage> {
       ..setBackgroundColor(const Color(0x00000000))
       ..setNavigationDelegate(delegate);
     if (widget.htmlContent.isNotEmpty) {
+      final modifiedHtmlContent = _replaceAttachmentCids(widget.htmlContent, widget.attachments);
       _controller.loadRequest(Uri.dataFromString(
-        widget.htmlContent,
+        modifiedHtmlContent,
         mimeType: 'text/html',
         encoding: Encoding.getByName('utf-8'),
       ));

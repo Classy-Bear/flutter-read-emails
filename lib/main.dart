@@ -141,6 +141,7 @@ class _AuthPageState extends State<AuthPage> {
                                           emailData['body']?.toString() ?? '',
                                       subject:
                                           emailData['subject'] ?? 'No Subject',
+                                      attachments: emailData['attachments'],
                                     ),
                                   ));
                             },
