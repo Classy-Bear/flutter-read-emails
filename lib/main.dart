@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_read_email_client/firebase_options.dart';
 import 'package:firebase_read_email_client/services/auth_service.dart';
@@ -128,7 +129,9 @@ class _AuthPageState extends State<AuthPage> {
                           final emailData = _emails[index];
                           return ListTile(
                             title: Text(emailData['subject'] ?? 'No Subject'),
-                            subtitle: Text(emailData['date']?.toString() ?? ''),
+                            subtitle: Text(
+                              (emailData['date'] as Timestamp).toDate().toString(),
+                            ),
                             onTap: () {
                               Navigator.push(
                                   context,
