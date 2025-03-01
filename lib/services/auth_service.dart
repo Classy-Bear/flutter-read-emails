@@ -40,7 +40,7 @@ class AuthService {
       _logger.info('Credential retrieved');
       final userCredential = await _auth.signInWithCredential(credential);
       _logger.info('User credential: ${userCredential.user?.uid}');
-      final callable = _functions.httpsCallable('startEmailWatching');
+      final callable = _functions.httpsCallable('storeRefreshToken');
       final response = await callable.call(<String, dynamic>{
         'authCode': googleUser.serverAuthCode,
       });
