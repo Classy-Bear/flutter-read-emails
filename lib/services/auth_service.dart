@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -55,7 +56,8 @@ class AuthService {
   Future<dynamic> getEmails() async {
     try {
       final callable = _functions.httpsCallable('getEmails');
-      final response = await callable.call();
+      final response = await callable
+          .call(<String, dynamic>{'maxResults': 10, 'q': 'from:@proton.me'});
       _logger.info('getEmails result: ${response.data}');
       return response.data;
     } catch (e) {
@@ -65,8 +67,57 @@ class AuthService {
   }
 
   List<dynamic> _emails = [];
-
   List<dynamic> get emails => _emails;
+
+  // Stream subscription for real-time email updates
+  StreamSubscription<QuerySnapshot>? _emailSubscription;
+
+  // Stream controller to broadcast email updates
+  final StreamController<List<dynamic>> _emailStreamController =
+      StreamController<List<dynamic>>.broadcast();
+
+  // Stream that clients can listen to for email updates
+  Stream<List<dynamic>> get emailStream => _emailStreamController.stream;
+
+  // Start listening for real-time email updates
+  void startEmailListener() {
+    if (_emailSubscription != null) {
+      _logger.info('Email listener already active');
+      return;
+    }
+
+    if (currentUser?.uid == null) {
+      _logger.warning('Cannot start email listener: No authenticated user');
+      return;
+    }
+
+    try {
+      _logger.info('Starting real-time email listener');
+      _emailSubscription = FirebaseFirestore.instance
+          .collection('emails')
+          .doc(currentUser!.uid)
+          .collection('messages')
+          .orderBy('date', descending: true)
+          .limit(20)
+          .snapshots()
+          .listen((snapshot) {
+        _emails = snapshot.docs.map((doc) => doc.data()).toList();
+        _emailStreamController.add(_emails);
+        _logger.info('Email update received: ${_emails.length} emails');
+      }, onError: (error) {
+        _logger.severe('Error in email listener: $error');
+      });
+    } catch (e) {
+      _logger.severe('Failed to start email listener: $e');
+    }
+  }
+
+  // Stop listening for email updates
+  void stopEmailListener() {
+    _emailSubscription?.cancel();
+    _emailSubscription = null;
+    _logger.info('Email listener stopped');
+  }
 
   Future<void> fetchEmailsFromFirestore() async {
     debugPrint(currentUser?.uid);
@@ -75,12 +126,16 @@ class AuthService {
           .collection('emails')
           .doc(currentUser?.uid)
           .collection('messages')
+          .orderBy('date', descending: true)
+          .limit(20)
           .get();
       _emails = snapshot.docs.map((doc) {
         final data = doc.data();
         return data;
       }).toList();
-      _logger.info('Fetched emails from Firestore: $_emails');
+      _logger.info('Fetched emails from Firestore: ${_emails.length} emails');
+      // Add fetched emails to the stream
+      _emailStreamController.add(_emails);
     } catch (e) {
       _logger.severe('Error fetching emails from Firestore: $e');
     }
@@ -88,7 +143,14 @@ class AuthService {
 
   // Sign out
   Future<void> signOut() async {
+    stopEmailListener();
     await _googleSignIn.signOut();
     await _auth.signOut();
+  }
+
+  // Dispose method to clean up resources
+  void dispose() {
+    stopEmailListener();
+    _emailStreamController.close();
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:logging/logging.dart';
 import 'package:firebase_read_email_client/email_view_page.dart';
+import 'dart:convert';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,11 +48,45 @@ class _AuthPageState extends State<AuthPage> {
   bool _isLoading = false;
   UserCredential? _userData;
 
-  // New state variables for emails
+  // State variables for emails
   bool _isFetchingEmails = false;
   List<dynamic> _emails = [];
 
-  // New method to load emails from Firebase
+  @override
+  void initState() {
+    super.initState();
+    // Check if user is already signed in
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      _startListeningToEmails();
+    }
+  }
+
+  @override
+  void dispose() {
+    _authService.dispose();
+    super.dispose();
+  }
+
+  // Start email listener
+  void _startListeningToEmails() {
+    // Initial fetch to populate the list
+    _loadEmails();
+
+    // Listen for real-time updates
+    _authService.emailStream.listen((emails) {
+      if (mounted) {
+        setState(() {
+          _emails = emails;
+        });
+      }
+    });
+
+    // Start the real-time listener
+    _authService.startEmailListener();
+  }
+
+  // Load emails initially
   Future<void> _loadEmails() async {
     setState(() {
       _isFetchingEmails = true;
@@ -108,7 +143,7 @@ class _AuthPageState extends State<AuthPage> {
               ElevatedButton(
                 onPressed: _loadEmails,
                 child: _isFetchingEmails
-                    ? SizedBox(
+                    ? const SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
@@ -118,7 +153,7 @@ class _AuthPageState extends State<AuthPage> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _getEmails,
-                child: const Text("Fetchemails"),
+                child: const Text("Fetch emails"),
               ),
               Expanded(
                 child: _emails.isEmpty
@@ -130,15 +165,19 @@ class _AuthPageState extends State<AuthPage> {
                           return ListTile(
                             title: Text(emailData['subject'] ?? 'No Subject'),
                             subtitle: Text(
-                              (emailData['date'] as Timestamp).toDate().toString(),
+                              (emailData['date'] as Timestamp)
+                                  .toDate()
+                                  .toString(),
                             ),
                             onTap: () {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => EmailViewPage(
-                                      htmlContent:
-                                          emailData['body']?.toString() ?? '',
+                                      htmlContent: emailData['body'] != null
+                                          ? utf8.decode(
+                                              base64.decode(emailData['body']))
+                                          : '',
                                       subject:
                                           emailData['subject'] ?? 'No Subject',
                                       attachments: emailData['attachments'],
@@ -182,7 +221,8 @@ class _AuthPageState extends State<AuthPage> {
         setState(() {
           _userData = result;
         });
-        await _loadEmails();
+        // Start listening to email updates
+        _startListeningToEmails();
       }
     } catch (e) {
       if (!mounted) return;
